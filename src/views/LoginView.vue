@@ -1,8 +1,32 @@
 <script setup>
 import logo from "../assets/Gatherly.png";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { supabase } from "../lib/superbase";
+
+const email = ref("");
+const password = ref("");
 
 const router = useRouter();
+
+const login = async () => {
+  console.log("Trying login:", email.value);
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value,
+  });
+
+  console.log("Data:", data);
+  console.log("Error:", error);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  router.push("/home");
+};
 </script>
 
 <template>
@@ -26,14 +50,16 @@ const router = useRouter();
       <div class="bg-white p-8 rounded-3xl shadow-xl">
         <p class="text-2xl font-semibold mb-6 opacity-95">Log into Gatherly</p>
 
-        <form class="space-y-4">
+        <form @submit.prevent="login" class="space-y-4">
           <input
+            v-model="email"
             type="email"
             placeholder="Email address"
             class="w-full shadow-sm border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
           <input
+            v-model="password"
             type="password"
             placeholder="Password"
             class="w-full shadow-sm border-gray-200 border rounded-2xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -41,7 +67,6 @@ const router = useRouter();
 
           <button
             type="submit"
-            @click="router.push('/home')"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-3xl"
           >
             Log In

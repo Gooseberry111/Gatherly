@@ -1,6 +1,29 @@
 <script setup>
+import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { supabase } from "../lib/superbase";
+
 const router = useRouter();
+const firstName = ref("");
+const lastName = ref("");
+const email = ref("");
+const password = ref("");
+const gender = ref("");
+
+const signUp = async () => {
+  const { data, error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value,
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Account created successfully!");
+  router.push("/");
+};
 </script>
 
 <template>
@@ -30,11 +53,13 @@ const router = useRouter();
           <p class="text-lg text-black mb-2">Name</p>
           <div class="flex gap-3">
             <input
+              v-model="firstName"
               type="text"
               placeholder="First name"
               class="w-1/2 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
             />
             <input
+              v-model="lastName"
               type="text"
               placeholder="Last name"
               class="w-1/2 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
@@ -82,6 +107,7 @@ const router = useRouter();
         <div>
           <p class="text-lg text-black mb-2">Gender</p>
           <select
+            v-model="gender"
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm text-gray-600"
           >
             <option disabled selected>Select gender</option>
@@ -95,6 +121,7 @@ const router = useRouter();
         <div>
           <p class="text-lg text-black mb-2">Mobile number or email</p>
           <input
+            v-model="email"
             type="text"
             placeholder="Mobile number or email"
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
@@ -108,6 +135,7 @@ const router = useRouter();
         <div>
           <p class="text-lg text-black mb-2">Password</p>
           <input
+            v-model="password"
             type="password"
             placeholder="Password"
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
@@ -136,7 +164,7 @@ const router = useRouter();
         <!-- Submit -->
         <button
           type="button"
-          @click="router.push('/home')"
+          @click="signUp"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-3xl"
         >
           Submit
