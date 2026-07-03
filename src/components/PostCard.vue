@@ -111,11 +111,7 @@ const deletePost = () => {
         </div>
       </div>
     </div>
-    <p class="text-xs text-red-500">Post User: {{ post.user_id }}</p>
 
-    <p class="text-xs text-blue-500">Current User: {{ currentUserId }}</p>
-    <p class="text-xs text-green-500">Is Owner: {{ isOwner() }}</p>
-    <!-- Post Content -->
     <p class="text-sm text-gray-800 leading-relaxed px-4">{{ post.content }}</p>
 
     <!-- Post Image -->
