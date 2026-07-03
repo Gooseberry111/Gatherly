@@ -4,6 +4,7 @@ import CreatePost from "./CreatePost.vue";
 import PostCard from "./PostCard.vue";
 import StoryBar from "./StoryBar.vue";
 import { supabase } from "../lib/supabase";
+import { currentUser } from "../store/auth";
 
 const posts = ref([]);
 
@@ -18,7 +19,16 @@ const loadPosts = async () => {
 const handleNewPost = (post) => {
   posts.value.unshift(post);
 };
+const handleDeletePost = async (postId) => {
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  posts.value = posts.value.filter((post) => post.id !== postId);
+};
 onMounted(loadPosts);
 </script>
 
@@ -26,6 +36,12 @@ onMounted(loadPosts);
   <div class="py-4 space-y-4">
     <CreatePost @newPost="handleNewPost" />
     <StoryBar />
-    <PostCard v-for="post in posts" :key="post.id" :post="post" />
+    <PostCard
+      v-for="post in posts"
+      :key="post.id"
+      :post="post"
+      :current-user-id="currentUser?.id"
+      @delete-post="handleDeletePost"
+    />
   </div>
 </template>

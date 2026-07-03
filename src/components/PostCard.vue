@@ -3,13 +3,24 @@ import { ref } from "vue";
 
 const props = defineProps({
   post: Object,
+  currentUserId: String,
 });
+const isOwner = () => {
+  return props.post.user_id === props.currentUserId;
+};
 
 const liked = ref(false);
 const likeCount = ref(props.post.likes_count || 0);
 const showComments = ref(false);
 const commentText = ref("");
 const comments = ref([]);
+const emit = defineEmits(["delete-post"]);
+
+const showMenu = ref(false);
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value;
+};
 
 const toggleLike = () => {
   liked.value = !liked.value;
@@ -30,13 +41,15 @@ const submitComment = () => {
   });
   commentText.value = "";
 };
+const deletePost = () => {
+  emit("delete-post", props.post.id);
+};
 </script>
 
 <template>
   <div class="bg-white rounded-xl shadow space-y-3">
     <!-- Post Header -->
-    <!-- Post Header -->
-    <div class="flex items-center justify-between px-4 pt-4">
+    <div class="flex items-center justify-between px-4 pt-4 relative">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
           <img
@@ -61,9 +74,47 @@ const submitComment = () => {
           </p>
         </div>
       </div>
-      ...
-    </div>
+      <div class="relative">
+        <button
+          @click="toggleMenu"
+          class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"
+        >
+          <i class="fa fa-ellipsis-h"></i>
+        </button>
 
+        <div
+          v-if="showMenu"
+          class="absolute right-0 top-10 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
+        >
+          <div v-if="isOwner()">
+            <button
+              @click="deletePost"
+              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-500 text-sm"
+            >
+              Delete Post
+            </button>
+          </div>
+
+          <div v-else>
+            <button
+              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-sm"
+            >
+              Save Post
+            </button>
+
+            <button
+              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-sm"
+            >
+              Not Interested
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="text-xs text-red-500">Post User: {{ post.user_id }}</p>
+
+    <p class="text-xs text-blue-500">Current User: {{ currentUserId }}</p>
+    <p class="text-xs text-green-500">Is Owner: {{ isOwner() }}</p>
     <!-- Post Content -->
     <p class="text-sm text-gray-800 leading-relaxed px-4">{{ post.content }}</p>
 
