@@ -1,14 +1,15 @@
 <script setup>
 import { ref } from "vue";
+import { supabase } from "../lib/supabase";
+import { currentUser, userProfile } from "../store/auth";
 
 const showModal = ref(false);
 const postText = ref("");
 const postImage = ref(null);
 const postImagePreview = ref(null);
+const posting = ref(false);
 
-const openModal = () => {
-  showModal.value = true;
-};
+const openModal = () => (showModal.value = true);
 const closeModal = () => {
   showModal.value = false;
   postText.value = "";
@@ -25,20 +26,40 @@ const onImageSelected = (e) => {
 
 const emit = defineEmits(["newPost"]);
 
-const submitPost = () => {
-  if (!postText.value.trim() && !postImagePreview.value) return;
-  emit("newPost", {
-    id: Date.now(),
-    name: "Emmanuella",
-    time: "Just now",
-    content: postText.value,
-    avatar: null,
-    image: postImagePreview.value,
-    video: null,
-    likes: 0,
-    comments: 0,
-    shares: 0,
-  });
+const submitPost = async () => {
+  if (!postText.value.trim() && !postImage.value) return;
+  posting.value = true;
+
+  let image_url = null;
+  if (postImage.value) {
+    const ext = postImage.value.name.split(".").pop();
+    const fileName = `${currentUser.value.id}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("post-images")
+      .upload(fileName, postImage.value);
+    if (!uploadErr) {
+      image_url = supabase.storage.from("post-images").getPublicUrl(fileName)
+        .data.publicUrl;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      user_id: currentUser.value.id,
+      content: postText.value.trim(),
+      image_url,
+    })
+    .select()
+    .single();
+
+  posting.value = false;
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  emit("newPost", { ...data, profiles: userProfile.value });
   closeModal();
 };
 </script>

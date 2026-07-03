@@ -2,7 +2,7 @@
 import logo from "../assets/Gatherly.png";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { supabase } from "../lib/superbase";
+import { supabase } from "../lib/supabase";
 
 const email = ref("");
 const password = ref("");

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { supabase } from "../lib/superbase";
+import { supabase } from "../lib/supabase";
 
 const router = useRouter();
 const firstName = ref("");
@@ -14,6 +14,9 @@ const signUp = async () => {
   const { data, error } = await supabase.auth.signUp({
     email: email.value,
     password: password.value,
+    options: {
+      data: { full_name: `${firstName.value} ${lastName.value}`.trim() },
+    },
   });
 
   if (error) {

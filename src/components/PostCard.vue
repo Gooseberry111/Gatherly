@@ -6,7 +6,7 @@ const props = defineProps({
 });
 
 const liked = ref(false);
-const likeCount = ref(props.post.likes);
+const likeCount = ref(props.post.likes_count || 0);
 const showComments = ref(false);
 const commentText = ref("");
 const comments = ref([]);
@@ -35,12 +35,13 @@ const submitComment = () => {
 <template>
   <div class="bg-white rounded-xl shadow space-y-3">
     <!-- Post Header -->
+    <!-- Post Header -->
     <div class="flex items-center justify-between px-4 pt-4">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
           <img
-            v-if="post.avatar"
-            :src="post.avatar"
+            v-if="post.profiles?.avatar_url"
+            :src="post.profiles.avatar_url"
             class="w-full h-full object-cover"
           />
           <div
@@ -51,36 +52,38 @@ const submitComment = () => {
           </div>
         </div>
         <div>
-          <p class="text-sm font-semibold text-gray-800">{{ post.name }}</p>
+          <p class="text-sm font-semibold text-gray-800">
+            {{ post.profiles?.full_name || "Unknown" }}
+          </p>
           <p class="text-xs text-gray-400">
-            {{ post.time }} · <i class="fa fa-globe-americas"></i>
+            {{ new Date(post.created_at).toLocaleDateString() }} ·
+            <i class="fa fa-globe-americas"></i>
           </p>
         </div>
       </div>
-      <button
-        class="text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
-      >
-        <i class="fa fa-ellipsis-h"></i>
-      </button>
+      ...
     </div>
 
     <!-- Post Content -->
     <p class="text-sm text-gray-800 leading-relaxed px-4">{{ post.content }}</p>
 
     <!-- Post Image -->
-    <img v-if="post.image" :src="post.image" class="w-full object-contain" />
+    <img
+      v-if="post.image_url"
+      :src="post.image_url"
+      class="w-full object-contain"
+    />
 
     <!-- Post Video -->
     <video
-      v-if="post.video"
-      :src="post.video"
+      v-if="post.video_url"
+      :src="post.video_url"
       autoplay
       muted
       loop
       controls
       class="w-full max-h-80 object-contain"
     ></video>
-
     <!-- Like/Comment Count -->
     <div
       class="flex items-center justify-between text-xs text-gray-400 border-b border-gray-200 pb-2 px-4"
