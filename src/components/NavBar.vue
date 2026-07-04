@@ -1,10 +1,17 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import logo from "../assets/Gatherly.png";
+import { useFriends } from "../composables/useFriends";
 
 const router = useRouter();
 const route = useRoute();
+
+const { getPendingRequests, pendingRequests } = useFriends();
+
+onMounted(async () => {
+  await getPendingRequests();
+});
 
 const searchQuery = ref("");
 const showResults = ref(false);
@@ -13,12 +20,13 @@ const navItems = [
   { key: "home", icon: "fa-home", route: "/home" },
   { key: "reels", icon: "fa-film", route: "/reels" },
   { key: "marketplace", icon: "fa-store", route: "/home" },
-  { key: "friends", icon: "fa-user-friends", route: "/home" },
+  { key: "friends", icon: "fa-user-friends", route: "/people" },
   { key: "gaming", icon: "fa-gamepad", route: "/home" },
 ];
 
 const activeNav = computed(() => {
   if (route.path === "/reels") return "reels";
+  if (route.path === "/people") return "friends";
   return "home";
 });
 
@@ -55,8 +63,8 @@ const onBlur = () => {
   }, 200);
 };
 
-const goTo = (route) => {
-  router.push(route);
+const goTo = (path) => {
+  router.push(path);
   searchQuery.value = "";
   showResults.value = false;
 };
@@ -175,9 +183,16 @@ const goTo = (route) => {
           <i class="fa fa-comment text-gray-600 text-sm sm:text-base"></i>
         </button>
         <button
-          class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+          @click="router.push('/friend-requests')"
+          class="relative hidden sm:flex bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 items-center justify-center"
         >
           <i class="fa fa-bell text-gray-600 text-sm sm:text-base"></i>
+          <span
+            v-if="pendingRequests.length > 0"
+            class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
+          >
+            {{ pendingRequests.length }}
+          </span>
         </button>
         <button
           class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"

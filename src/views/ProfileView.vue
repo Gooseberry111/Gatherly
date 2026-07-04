@@ -5,24 +5,16 @@ import BottomNav from "../components/BottomNav.vue";
 import { supabase } from "../lib/supabase";
 import { currentUser, userProfile } from "../store/auth";
 import { useProfile } from "../composables/useProfile";
-import maryann from "../assets/images/maryann.jpeg";
-import dorcas from "../assets/images/dorcas.jpeg";
-import faith from "../assets/images/faith.jpeg";
-import mercy from "../assets/images/mercy.jpeg";
-import joel from "../assets/images/joel.jpeg";
-import tony from "../assets/images/tony.jpeg";
-import jill from "../assets/images/jill.jpeg";
+import { useFriends } from "../composables/useFriends";
 import christmas from "../assets/images/christmas.jpeg";
-import evolve1 from "../assets/images/evolve1.jpeg";
-import evolve2 from "../assets/images/evolve2.jpeg";
-import evolve from "../assets/images/evolve.jpeg";
 import grad from "../assets/images/grad.jpeg";
-import me from "../assets/images/me.jpeg";
 import peace from "../assets/images/peace.jpeg";
 import ijeoma from "../assets/images/ijeoma.jpeg";
 import chidera from "../assets/images/chidera.jpeg";
+import me from "../assets/images/me.jpeg";
 
 const { updateProfile, uploadAvatar, uploadCover } = useProfile();
+const { getFriends, friends: friendsList } = useFriends();
 
 const activeTab = ref("posts");
 const tabs = ["Posts", "About", "Friends", "Photos", "Videos", "Reels"];
@@ -37,12 +29,12 @@ const avatarUrl = ref(null);
 const coverUrl = ref(null);
 
 const photos = [christmas, grad, peace, ijeoma, chidera, me];
-
-const friends = [];
-
 const posts = ref([]);
 
 onMounted(async () => {
+  // Load friends from Supabase
+  await getFriends();
+
   // Load profile data
   if (userProfile.value) {
     fullName.value = userProfile.value.full_name || "";
@@ -163,7 +155,10 @@ const saveProfile = async () => {
             {{ fullName || "Your Name" }}
           </h1>
           <p class="text-gray-500 text-sm mt-1">
-            <span class="font-bold text-gray-800">500</span> friends
+            <span class="font-bold text-gray-800">{{
+              friendsList.length
+            }}</span>
+            friends
           </p>
           <p class="text-gray-700 text-sm mt-1">{{ bio }}</p>
 
@@ -241,15 +236,31 @@ const saveProfile = async () => {
                 <h1 class="text-3xl font-bold text-gray-900">
                   {{ fullName || "Your Name" }}
                 </h1>
-                <p class="text-gray-500 text-sm mt-1">500 friends</p>
+                <p class="text-gray-500 text-sm mt-1">
+                  <span class="font-bold text-gray-800">{{
+                    friendsList.length
+                  }}</span>
+                  friends
+                </p>
                 <p class="text-gray-600 text-sm mt-1">{{ bio }}</p>
                 <div class="flex items-center mt-2">
-                  <img
-                    v-for="(f, i) in friends.slice(0, 6)"
-                    :key="i"
-                    :src="f.img"
-                    class="w-8 h-8 rounded-full border-2 border-white object-cover -ml-2 first:ml-0"
-                  />
+                  <div
+                    v-for="friend in friendsList.slice(0, 6)"
+                    :key="friend.id"
+                    class="w-8 h-8 rounded-full border-2 border-white overflow-hidden -ml-2 first:ml-0 bg-gray-300"
+                  >
+                    <img
+                      v-if="friend.avatar_url"
+                      :src="friend.avatar_url"
+                      class="w-full h-full object-cover"
+                    />
+                    <div
+                      v-else
+                      class="w-full h-full flex items-center justify-center"
+                    >
+                      <i class="fa fa-user text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -326,11 +337,14 @@ const saveProfile = async () => {
           </button>
         </div>
 
+        <!-- Mobile Friends -->
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-3">
             <div>
               <h2 class="text-lg font-bold text-gray-800">Friends</h2>
-              <p class="text-sm text-gray-500">500 friends</p>
+              <p class="text-sm text-gray-500">
+                {{ friendsList.length }} friends
+              </p>
             </div>
             <button class="text-blue-600 text-sm hover:underline">
               Find friends
@@ -338,20 +352,33 @@ const saveProfile = async () => {
           </div>
           <div class="grid grid-cols-3 gap-2">
             <div
-              v-for="friend in friends.slice(0, 6)"
-              :key="friend.name"
+              v-for="friend in friendsList.slice(0, 6)"
+              :key="friend.id"
               class="flex flex-col items-center gap-1"
             >
-              <div class="w-full aspect-square rounded-lg overflow-hidden">
-                <img :src="friend.img" class="w-full h-full object-cover" />
+              <div
+                class="w-full aspect-square rounded-lg overflow-hidden bg-gray-300"
+              >
+                <img
+                  v-if="friend.avatar_url"
+                  :src="friend.avatar_url"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <i class="fa fa-user text-gray-400 text-2xl"></i>
+                </div>
               </div>
               <span class="text-xs text-gray-600 font-medium text-center">{{
-                friend.name
+                friend.full_name
               }}</span>
             </div>
           </div>
         </div>
 
+        <!-- Mobile Create Post -->
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
@@ -375,6 +402,7 @@ const saveProfile = async () => {
           </div>
         </div>
 
+        <!-- Mobile Posts -->
         <div
           v-for="post in posts"
           :key="post.id"
@@ -475,6 +503,7 @@ const saveProfile = async () => {
             </button>
           </div>
 
+          <!-- Desktop Photos -->
           <div class="bg-white rounded-xl shadow p-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-lg font-bold text-gray-800">Photos</h2>
@@ -493,6 +522,7 @@ const saveProfile = async () => {
             </div>
           </div>
 
+          <!-- Desktop Friends -->
           <div class="bg-white rounded-xl shadow p-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-lg font-bold text-gray-800">Friends</h2>
@@ -502,21 +532,34 @@ const saveProfile = async () => {
             </div>
             <div class="grid grid-cols-3 gap-2">
               <div
-                v-for="friend in friends"
-                :key="friend.name"
+                v-for="friend in friendsList"
+                :key="friend.id"
                 class="flex flex-col items-center gap-1"
               >
-                <div class="w-full aspect-square rounded-lg overflow-hidden">
-                  <img :src="friend.img" class="w-full h-full object-cover" />
+                <div
+                  class="w-full aspect-square rounded-lg overflow-hidden bg-gray-300"
+                >
+                  <img
+                    v-if="friend.avatar_url"
+                    :src="friend.avatar_url"
+                    class="w-full h-full object-cover"
+                  />
+                  <div
+                    v-else
+                    class="w-full h-full flex items-center justify-center"
+                  >
+                    <i class="fa fa-user text-gray-400 text-2xl"></i>
+                  </div>
                 </div>
                 <span class="text-xs text-gray-600 font-medium text-center">{{
-                  friend.name
+                  friend.full_name
                 }}</span>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Desktop Posts -->
         <div class="col-span-8 space-y-4">
           <div class="bg-white rounded-xl shadow p-4">
             <div class="flex items-center gap-3">
@@ -633,7 +676,6 @@ const saveProfile = async () => {
               <i class="fa fa-times text-gray-600"></i>
             </button>
           </div>
-
           <div class="px-6 py-4 space-y-4">
             <div>
               <label class="text-sm font-medium text-gray-700">Full name</label>
@@ -676,7 +718,6 @@ const saveProfile = async () => {
               />
             </div>
           </div>
-
           <div class="px-6 pb-6">
             <button
               @click="saveProfile"

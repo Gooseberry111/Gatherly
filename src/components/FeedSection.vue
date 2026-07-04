@@ -5,30 +5,39 @@ import PostCard from "./PostCard.vue";
 import StoryBar from "./StoryBar.vue";
 import { supabase } from "../lib/supabase";
 import { currentUser } from "../store/auth";
+import { useFriends } from "../composables/useFriends.js";
 
+const { getFriends, friends } = useFriends();
 const posts = ref([]);
 
 const loadPosts = async () => {
+  await getFriends();
+
+  const friendIds = friends.value.map((f) => f.id);
+  friendIds.push(currentUser.value.id); // include own posts
+
   const { data, error } = await supabase
     .from("posts")
     .select("*, profiles(full_name, avatar_url)")
+    .in("user_id", friendIds)
     .order("created_at", { ascending: false });
+
   if (!error) posts.value = data;
 };
 
 const handleNewPost = (post) => {
   posts.value.unshift(post);
 };
+
 const handleDeletePost = async (postId) => {
   const { error } = await supabase.from("posts").delete().eq("id", postId);
-
   if (error) {
     alert(error.message);
     return;
   }
-
   posts.value = posts.value.filter((post) => post.id !== postId);
 };
+
 onMounted(loadPosts);
 </script>
 
