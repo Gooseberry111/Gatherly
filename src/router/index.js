@@ -7,6 +7,7 @@ import ProfileView from "../views/ProfileView.vue";
 import ReelsView from "../views/ReelsView.vue";
 import PeopleView from "../views/PeopleView.vue";
 import FriendRequestsView from "../views/FriendRequestsView.vue";
+import CreateStoryView from "../views/CreateStoryView.vue";
 
 const routes = [
   { path: "/", component: LoginView },
@@ -16,6 +17,7 @@ const routes = [
   { path: "/profile", component: ProfileView },
   { path: "/people", component: PeopleView },
   { path: "/friend-requests", component: FriendRequestsView },
+  { path: "/stories/create", component: CreateStoryView },
 ];
 
 const router = createRouter({

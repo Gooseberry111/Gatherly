@@ -1,55 +1,94 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { supabase } from "../lib/supabase";
+import { currentUser } from "../store/auth";
 
 const props = defineProps({
   post: Object,
-  currentUserId: String,
 });
-const isOwner = () => {
-  return props.post.user_id === props.currentUserId;
-};
+
+const emit = defineEmits(["deletePost"]);
 
 const liked = ref(false);
 const likeCount = ref(props.post.likes_count || 0);
 const showComments = ref(false);
 const commentText = ref("");
 const comments = ref([]);
-const emit = defineEmits(["delete-post"]);
+const commentsCount = ref(props.post.comments_count || 0);
 
-const showMenu = ref(false);
+onMounted(async () => {
+  if (currentUser.value) {
+    const { data } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("post_id", props.post.id)
+      .eq("user_id", currentUser.value.id)
+      .single();
+    liked.value = !!data;
+  }
+});
 
-const toggleMenu = () => {
-  showMenu.value = !showMenu.value;
+const loadComments = async () => {
+  const { data } = await supabase
+    .from("comments")
+    .select("*, profiles(full_name, avatar_url)")
+    .eq("post_id", props.post.id)
+    .order("created_at", { ascending: true });
+
+  if (data) comments.value = data;
 };
 
-const toggleLike = () => {
-  liked.value = !liked.value;
-  likeCount.value = liked.value ? likeCount.value + 1 : likeCount.value - 1;
+const toggleLike = async () => {
+  if (!currentUser.value) return;
+  if (liked.value) {
+    await supabase
+      .from("likes")
+      .delete()
+      .eq("post_id", props.post.id)
+      .eq("user_id", currentUser.value.id);
+    liked.value = false;
+    likeCount.value--;
+  } else {
+    await supabase
+      .from("likes")
+      .insert({ post_id: props.post.id, user_id: currentUser.value.id });
+    liked.value = true;
+    likeCount.value++;
+  }
 };
 
-const toggleComments = () => {
+const toggleComments = async () => {
   showComments.value = !showComments.value;
+  if (showComments.value && comments.value.length === 0) {
+    await loadComments();
+  }
 };
 
-const submitComment = () => {
-  if (commentText.value.trim() === "") return;
-  comments.value.push({
-    id: Date.now(),
-    name: "Emmanuella",
-    text: commentText.value.trim(),
-    time: "Just now",
-  });
-  commentText.value = "";
-};
-const deletePost = () => {
-  emit("delete-post", props.post.id);
+const submitComment = async () => {
+  if (!commentText.value.trim() || !currentUser.value) return;
+
+  const { data, error } = await supabase
+    .from("comments")
+    .insert({
+      post_id: props.post.id,
+      user_id: currentUser.value.id,
+      content: commentText.value.trim(),
+    })
+    .select("*, profiles(full_name, avatar_url)")
+    .single();
+
+  if (!error && data) {
+    comments.value.push(data);
+    commentsCount.value++;
+    commentText.value = "";
+  }
 };
 </script>
 
 <template>
   <div class="bg-white rounded-xl shadow space-y-3">
     <!-- Post Header -->
-    <div class="flex items-center justify-between px-4 pt-4 relative">
+    <div class="flex items-center justify-between px-4 pt-4">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
           <img
@@ -66,7 +105,7 @@ const deletePost = () => {
         </div>
         <div>
           <p class="text-sm font-semibold text-gray-800">
-            {{ post.profiles?.full_name || "Unknown" }}
+            {{ post.profiles?.full_name || post.name }}
           </p>
           <p class="text-xs text-gray-400">
             {{ new Date(post.created_at).toLocaleDateString() }} ·
@@ -74,63 +113,36 @@ const deletePost = () => {
           </p>
         </div>
       </div>
-      <div class="relative">
-        <button
-          @click="toggleMenu"
-          class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"
-        >
-          <i class="fa fa-ellipsis-h"></i>
-        </button>
-
-        <div
-          v-if="showMenu"
-          class="absolute right-0 top-10 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
-        >
-          <div v-if="isOwner()">
-            <button
-              @click="deletePost"
-              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-500 text-sm"
-            >
-              Delete Post
-            </button>
-          </div>
-
-          <div v-else>
-            <button
-              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-sm"
-            >
-              Save Post
-            </button>
-
-            <button
-              class="w-full text-left px-4 py-3 hover:bg-gray-100 text-sm"
-            >
-              Not Interested
-            </button>
-          </div>
-        </div>
-      </div>
+      <button
+        class="text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
+      >
+        <i class="fa fa-ellipsis-h"></i>
+      </button>
     </div>
 
-    <p class="text-sm text-gray-800 leading-relaxed px-4">{{ post.content }}</p>
+    <!-- Post Content -->
+    <p v-if="post.content" class="text-sm text-gray-800 leading-relaxed px-4">
+      {{ post.content }}
+    </p>
 
     <!-- Post Image -->
     <img
-      v-if="post.image_url"
-      :src="post.image_url"
+      v-if="post.image_url || post.image"
+      :src="post.image_url || post.image"
       class="w-full object-contain"
     />
 
     <!-- Post Video -->
     <video
-      v-if="post.video_url"
-      :src="post.video_url"
+      v-if="post.video_url || post.video"
+      :src="post.video_url || post.video"
       autoplay
       muted
       loop
       controls
       class="w-full max-h-80 object-contain"
     ></video>
+
     <!-- Like/Comment Count -->
     <div
       class="flex items-center justify-between text-xs text-gray-400 border-b border-gray-200 pb-2 px-4"
@@ -143,8 +155,7 @@ const deletePost = () => {
         {{ likeCount }}
       </span>
       <button @click="toggleComments" class="hover:underline">
-        {{ comments.length + post.comments }} comments ·
-        {{ post.shares }} shares
+        {{ commentsCount }} comments · {{ post.shares || 0 }} shares
       </button>
     </div>
 
@@ -182,27 +193,36 @@ const deletePost = () => {
       v-if="showComments"
       class="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3"
     >
-      <!-- Existing comments -->
+      <!-- Comments list -->
       <div
         v-for="comment in comments"
         :key="comment.id"
         class="flex items-start gap-2"
       >
         <div
-          class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0"
+          class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gray-300"
         >
-          <i class="fa fa-user text-gray-500 text-xs"></i>
+          <img
+            v-if="comment.profiles?.avatar_url"
+            :src="comment.profiles.avatar_url"
+            class="w-full h-full object-cover"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center">
+            <i class="fa fa-user text-gray-400 text-xs"></i>
+          </div>
         </div>
         <div class="bg-gray-100 rounded-2xl px-3 py-2 flex-1">
-          <p class="text-xs font-semibold text-gray-800">{{ comment.name }}</p>
-          <p class="text-sm text-gray-700">{{ comment.text }}</p>
+          <p class="text-xs font-semibold text-gray-800">
+            {{ comment.profiles?.full_name || "User" }}
+          </p>
+          <p class="text-sm text-gray-700">{{ comment.content }}</p>
         </div>
       </div>
 
       <!-- Comment Input -->
       <div class="flex items-center gap-2">
         <div
-          class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0"
+          class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gray-300 flex items-center justify-center"
         >
           <i class="fa fa-user text-gray-500 text-xs"></i>
         </div>

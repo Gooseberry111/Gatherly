@@ -1,11 +1,17 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import StoryViewer from "./StoryViewer.vue";
+import { supabase } from "../lib/supabase";
+import { currentUser } from "../store/auth";
+import { useRouter } from "vue-router";
 
 const scrollContainer = ref(null);
 const showLeftArrow = ref(false);
 const showViewer = ref(false);
 const selectedIndex = ref(0);
+const stories = ref([]);
+const uploading = ref(false);
+const router = useRouter();
 
 const scroll = (direction) => {
   const container = scrollContainer.value;
@@ -28,28 +34,87 @@ const closeStory = () => {
   showViewer.value = false;
 };
 
-import story1 from "../assets/images/maryann.jpeg";
-import story2 from "../assets/images/dorcas.jpeg";
-import story3 from "../assets/images/faith.jpeg";
-import story4 from "../assets/images/mercy.jpeg";
-import story5 from "../assets/images/joel.jpeg";
-import story6 from "../assets/images/tony.jpeg";
+const loadStories = async () => {
+  const { data, error } = await supabase
+    .from("stories")
+    .select("*")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
 
-const stories = [
-  { id: 1, name: "Joel", img: story5 },
-  { id: 2, name: "Dorcas", img: story2 },
-  { id: 3, name: "Faith", img: story3 },
-  { id: 4, name: "Mercy", img: story4 },
-  { id: 5, name: "Maryann", img: story1 },
-  { id: 6, name: "Tony", img: story6 },
-];
+  if (data) {
+    const userIds = [...new Set(data.map((s) => s.user_id))];
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", userIds);
+
+    const profileMap = {};
+    if (profiles) {
+      profiles.forEach((p) => {
+        profileMap[p.id] = p;
+      });
+    }
+
+    // Group stories by user - keep only the most recent per user
+    const seenUsers = new Set();
+    stories.value = data
+      .filter((s) => {
+        if (seenUsers.has(s.user_id)) return false;
+        seenUsers.add(s.user_id);
+        return true;
+      })
+      .map((s) => ({
+        id: s.id,
+        user_id: s.user_id,
+        name: profileMap[s.user_id]?.full_name || "User",
+        img: s.image_url || null,
+        avatar: profileMap[s.user_id]?.avatar_url || null,
+        textContent: s.text_content || null,
+        textBg: s.text_bg || null,
+      }));
+  }
+};
+const onStoryImageSelected = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentUser.value) return;
+
+  uploading.value = true;
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `public/${currentUser.value.id}_${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("stories")
+    .upload(fileName, file);
+
+  if (uploadError) {
+    alert(uploadError.message);
+    uploading.value = false;
+    return;
+  }
+
+  const { data: urlData } = supabase.storage
+    .from("stories")
+    .getPublicUrl(fileName);
+
+  const { error: insertError } = await supabase.from("stories").insert({
+    user_id: currentUser.value.id,
+    image_url: urlData.publicUrl,
+  });
+
+  if (!insertError) await loadStories();
+  uploading.value = false;
+};
+
+onMounted(loadStories);
 </script>
 
 <template>
   <div class="relative">
     <!-- Story Viewer -->
     <StoryViewer
-      v-if="showViewer"
+      v-if="showViewer && stories.length > 0"
       :stories="stories"
       :startIndex="selectedIndex"
       @close="closeStory"
@@ -72,7 +137,9 @@ const stories = [
       style="scrollbar-width: none; -ms-overflow-style: none"
     >
       <!-- Create Story -->
+      <!-- Create Story -->
       <div
+        @click="router.push('/stories/create')"
         class="flex-shrink-0 w-28 h-44 rounded-xl overflow-hidden shadow cursor-pointer relative bg-white"
       >
         <div
@@ -105,7 +172,17 @@ const stories = [
         <div
           class="absolute top-3 left-3 w-9 h-9 rounded-full border-4 border-blue-600 overflow-hidden"
         >
-          <img :src="story.img" class="w-full h-full object-cover" />
+          <img
+            v-if="story.avatar"
+            :src="story.avatar"
+            class="w-full h-full object-cover"
+          />
+          <div
+            v-else
+            class="w-full h-full bg-gray-300 flex items-center justify-center"
+          >
+            <i class="fa fa-user text-white text-sm"></i>
+          </div>
         </div>
 
         <!-- Name -->

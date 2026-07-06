@@ -102,11 +102,20 @@ onUnmounted(() => {
         }}</span>
       </div>
 
-      <!-- Story Image -->
+      <!-- Story Image or Text -->
       <img
+        v-if="stories[currentIndex].img"
         :src="stories[currentIndex].img"
         class="w-full h-full object-cover"
       />
+      <div
+        v-else-if="stories[currentIndex].textContent"
+        :class="`w-full h-full bg-gradient-to-br ${stories[currentIndex].textBg || 'from-blue-400 to-purple-600'} flex items-center justify-center p-8`"
+      >
+        <p class="text-white text-2xl font-bold text-center">
+          {{ stories[currentIndex].textContent }}
+        </p>
+      </div>
 
       <!-- Desktop Left Arrow -->
       <button
