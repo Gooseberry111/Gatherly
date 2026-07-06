@@ -23,19 +23,24 @@ onMounted(async () => {
       .select("id")
       .eq("post_id", props.post.id)
       .eq("user_id", currentUser.value.id)
-      .single();
+      .maybeSingle();
     liked.value = !!data;
   }
 });
 
 const loadComments = async () => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("comments")
     .select("*, profiles(full_name, avatar_url)")
     .eq("post_id", props.post.id)
     .order("created_at", { ascending: true });
 
-  if (data) comments.value = data;
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  comments.value = data;
 };
 
 const toggleLike = async () => {
@@ -77,11 +82,38 @@ const submitComment = async () => {
     .select("*, profiles(full_name, avatar_url)")
     .single();
 
-  if (!error && data) {
+  if (error) {
+    console.error("COMMENT ERROR:", error);
+    return;
+  }
+
+  if (data) {
     comments.value.push(data);
     commentsCount.value++;
     commentText.value = "";
   }
+};
+const openMenuId = ref(null);
+
+const toggleCommentMenu = (commentId) => {
+  openMenuId.value = openMenuId.value === commentId ? null : commentId;
+};
+
+const deleteComment = async (commentId) => {
+  const { error } = await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("user_id", currentUser.value.id);
+
+  if (error) {
+    console.error("DELETE COMMENT ERROR:", error);
+    return;
+  }
+
+  comments.value = comments.value.filter((c) => c.id !== commentId);
+  commentsCount.value--;
+  openMenuId.value = null;
 };
 </script>
 
@@ -197,7 +229,7 @@ const submitComment = async () => {
       <div
         v-for="comment in comments"
         :key="comment.id"
-        class="flex items-start gap-2"
+        class="flex items-start gap-2 relative"
       >
         <div
           class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gray-300"
@@ -211,11 +243,37 @@ const submitComment = async () => {
             <i class="fa fa-user text-gray-400 text-xs"></i>
           </div>
         </div>
-        <div class="bg-gray-100 rounded-2xl px-3 py-2 flex-1">
-          <p class="text-xs font-semibold text-gray-800">
-            {{ comment.profiles?.full_name || "User" }}
-          </p>
-          <p class="text-sm text-gray-700">{{ comment.content }}</p>
+
+        <div class="bg-gray-100 rounded-2xl px-3 py-2 flex-1 relative">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-xs font-semibold text-gray-800">
+                {{ comment.profiles?.full_name || "User" }}
+              </p>
+              <p class="text-sm text-gray-700">{{ comment.content }}</p>
+            </div>
+
+            <button
+              v-if="comment.user_id === currentUser?.id"
+              @click="toggleCommentMenu(comment.id)"
+              class="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            >
+              <i class="fa fa-ellipsis-h text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Dropdown menu -->
+          <div
+            v-if="openMenuId === comment.id"
+            class="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg z-10 text-sm"
+          >
+            <button
+              @click="deleteComment(comment.id)"
+              class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50 rounded-lg"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
