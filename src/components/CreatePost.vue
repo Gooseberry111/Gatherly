@@ -9,12 +9,30 @@ const postImage = ref(null);
 const postImagePreview = ref(null);
 const posting = ref(false);
 
+const visibility = ref("public"); // "public" | "friends"
+const showVisibilityMenu = ref(false);
+
+const visibilityOptions = [
+  { value: "public", label: "Everyone", icon: "fa-globe-americas" },
+  { value: "friends", label: "Friends", icon: "fa-user-friends" },
+];
+
+const currentVisibility = () =>
+  visibilityOptions.find((v) => v.value === visibility.value);
+
+const selectVisibility = (value) => {
+  visibility.value = value;
+  showVisibilityMenu.value = false;
+};
+
 const openModal = () => (showModal.value = true);
 const closeModal = () => {
   showModal.value = false;
   postText.value = "";
   postImage.value = null;
   postImagePreview.value = null;
+  visibility.value = "public";
+  showVisibilityMenu.value = false;
 };
 
 const onImageSelected = (e) => {
@@ -49,6 +67,7 @@ const submitPost = async () => {
       user_id: currentUser.value.id,
       content: postText.value.trim(),
       image_url,
+      visibility: visibility.value,
     })
     .select()
     .single();
@@ -65,12 +84,17 @@ const submitPost = async () => {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow p-4">
+  <div class="bg-white rounded-xl shadow p-2">
     <div class="flex items-center gap-3">
       <div
-        class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0"
+        class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
       >
-        <i class="fa fa-user text-gray-500"></i>
+        <img
+          v-if="userProfile?.avatar_url"
+          :src="userProfile.avatar_url"
+          class="w-full h-full object-cover"
+        />
+        <i v-else class="fa fa-user text-gray-500"></i>
       </div>
       <button
         @click="openModal"
@@ -80,19 +104,19 @@ const submitPost = async () => {
       </button>
       <button
         @click="openModal"
-        class="text-red-500 hover:bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        class="text-gray-400 hover:bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
       >
         <i class="fa fa-video text-lg"></i>
       </button>
       <button
         @click="openModal"
-        class="text-green-500 hover:bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        class="text-gray-400 hover:bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
       >
         <i class="fa fa-image text-lg"></i>
       </button>
       <button
         @click="openModal"
-        class="text-yellow-400 hover:bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        class="text-gray-400 hover:bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
       >
         <i class="fa fa-smile text-lg"></i>
       </button>
@@ -123,18 +147,47 @@ const submitPost = async () => {
         <!-- Author -->
         <div class="flex items-center gap-3 px-6 py-4">
           <div
-            class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center"
+            class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden"
           >
-            <i class="fa fa-user text-gray-500"></i>
+            <img
+              v-if="userProfile?.avatar_url"
+              :src="userProfile.avatar_url"
+              class="w-full h-full object-cover"
+            />
+            <i v-else class="fa fa-user text-gray-500"></i>
           </div>
-          <div>
-            <p class="text-sm font-semibold text-gray-800">Emmanuella</p>
+          <div class="relative">
+            <p class="text-sm font-semibold text-gray-800">
+              {{ userProfile?.full_name || "You" }}
+            </p>
             <button
-              class="flex items-center gap-1 bg-gray-100 text-xs font-medium px-2 py-1 rounded-lg mt-1"
+              @click="showVisibilityMenu = !showVisibilityMenu"
+              class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-xs font-medium px-2 py-1 rounded-lg mt-1"
             >
-              <i class="fa fa-globe-americas text-xs"></i> Everyone
+              <i :class="`fa ${currentVisibility().icon} text-xs`"></i>
+              {{ currentVisibility().label }}
               <i class="fa fa-chevron-down text-xs"></i>
             </button>
+
+            <!-- Visibility Dropdown -->
+            <div
+              v-if="showVisibilityMenu"
+              class="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40 py-1"
+            >
+              <button
+                v-for="option in visibilityOptions"
+                :key="option.value"
+                @click="selectVisibility(option.value)"
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+              >
+                <i :class="`fa ${option.icon} text-gray-500`"></i>
+                {{ option.label }}
+                <i
+                  v-if="visibility === option.value"
+                  class="fa fa-check text-blue-500 ml-auto"
+                ></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,7 +195,7 @@ const submitPost = async () => {
         <div class="px-6">
           <textarea
             v-model="postText"
-            placeholder="What's on your mind, Emmanuella?"
+            placeholder="What's on your mind?"
             class="w-full text-gray-800 text-lg placeholder-gray-400 focus:outline-none resize-none min-h-[120px]"
           ></textarea>
         </div>

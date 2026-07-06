@@ -1,17 +1,27 @@
 <script setup>
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
 const menuItems = [
-  { icon: "fa-user", label: "Profile" },
+  { icon: "fa-user", label: "Profile", route: "/profile" },
   { icon: "fa-user-friends", label: "Friends" },
   { icon: "fa-users", label: "Groups" },
   { icon: "fa-store", label: "Marketplace" },
   { icon: "fa-tv", label: "Watch" },
   { icon: "fa-clock", label: "Memories" },
-  { icon: "fa-film", label: "Reels" },
+  { icon: "fa-film", label: "Reels", route: "/reels" },
   { icon: "fa-bookmark", label: "Saved" },
   { icon: "fa-calendar", label: "Events" },
   { icon: "fa-gamepad", label: "Gaming" },
   { icon: "fa-newspaper", label: "Feeds" },
 ];
+
+const handleClick = (item) => {
+  if (item.route) {
+    router.push(item.route);
+  }
+};
 </script>
 
 <template>
@@ -19,6 +29,7 @@ const menuItems = [
     <button
       v-for="item in menuItems"
       :key="item.label"
+      @click="handleClick(item)"
       class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200 transition text-left"
     >
       <span

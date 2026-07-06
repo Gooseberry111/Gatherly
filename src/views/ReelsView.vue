@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from "vue";
-import NavBar from "../components/NavBar.vue";
 import karissa from "../assets/videos/karissa.mp4";
 import apochi from "../assets/videos/apochi.mov";
 import gym from "../assets/videos/gym.mp4";
@@ -139,9 +138,7 @@ const onTouchEnd = (e) => {
 
 <template>
   <div class="min-h-screen bg-black">
-    <NavBar />
-
-    <div class="pt-14 flex h-[calc(100vh-0.5rem)]">
+    <div class="pt-14 flex h-[calc(100vh-1.5rem)]">
       <!-- Left Sidebar - desktop only -->
       <div
         class="hidden lg:flex flex-col w-64 px-4 py-6 text-white flex-shrink-0"
@@ -297,7 +294,7 @@ const onTouchEnd = (e) => {
 
           <!-- Up/Down arrows -->
           <div
-            class="flex flex-col gap-3 justify-end h-[88vh] max-h-[820px] pb-50 pl"
+            class="flex flex-col gap-3 justify-end h-[88vh] max-h-[820px] pb-50 pl-30"
           >
             <button
               @click="prev"
