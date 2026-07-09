@@ -10,18 +10,19 @@ const password = ref("");
 const router = useRouter();
 
 const login = async () => {
-  console.log("Trying login:", email.value);
-
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value,
   });
 
-  console.log("Data:", data);
-  console.log("Error:", error);
-
   if (error) {
-    alert(error.message);
+    if (error.message.includes("Email not confirmed")) {
+      alert(
+        "Please check your email and confirm your account before logging in.",
+      );
+    } else {
+      alert(error.message);
+    }
     return;
   }
 

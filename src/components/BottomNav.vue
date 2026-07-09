@@ -8,13 +8,14 @@ const route = useRoute();
 const activeNav = computed(() => {
   if (route.path === "/reels") return "reels";
   if (route.path === "/profile") return "profile";
+  if (route.path === "/people") return "friends";
   return "home";
 });
 
 const navItems = [
   { key: "home", icon: "fa-home", route: "/home" },
   { key: "reels", icon: "fa-film", route: "/reels" },
-  { key: "friends", icon: "fa-user-friends", route: "/home" },
+  { key: "friends", icon: "fa-user-friends", route: "/people" },
   { key: "profile", icon: "fa-user", route: "/profile" },
 ];
 </script>

@@ -23,6 +23,7 @@ const isEditing = ref(false);
 const fullName = ref("");
 const bio = ref("");
 const location = ref("");
+const status = ref("");
 const workplace = ref("");
 const school = ref("");
 const avatarUrl = ref(null);
@@ -40,6 +41,7 @@ onMounted(async () => {
     fullName.value = userProfile.value.full_name || "";
     bio.value = userProfile.value.bio || "";
     location.value = userProfile.value.location || "";
+    status.value = userProfile.value.status || "";
     workplace.value = userProfile.value.workplace || "";
     school.value = userProfile.value.school || "";
     avatarUrl.value = userProfile.value.avatar_url || null;
@@ -82,6 +84,7 @@ const saveProfile = async () => {
     full_name: fullName.value,
     bio: bio.value,
     location: location.value,
+    status: status.value,
     workplace: workplace.value,
     school: school.value,
   });
@@ -152,7 +155,7 @@ const saveProfile = async () => {
           </div>
 
           <h1 class="text-2xl font-bold text-gray-900">
-            {{ fullName || "Your Name" }}
+            {{ fullName || "Your name" }}
           </h1>
           <p class="text-gray-500 text-sm mt-1">
             <span class="font-bold text-gray-800">{{

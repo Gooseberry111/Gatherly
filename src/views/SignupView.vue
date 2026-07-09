@@ -122,11 +122,11 @@ const signUp = async () => {
 
         <!-- Mobile or Email -->
         <div>
-          <p class="text-lg text-black mb-2">Mobile number or email</p>
+          <p class="text-lg text-black mb-2">Email Address</p>
           <input
             v-model="email"
             type="text"
-            placeholder="Mobile number or email"
+            placeholder="Enter your email"
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
           />
           <p class="text-xs text-gray-400 mt-1">
@@ -136,7 +136,7 @@ const signUp = async () => {
 
         <!-- Password -->
         <div>
-          <p class="text-lg text-black mb-2">Password</p>
+          <p class="text-lg text-black mb-2">Create Password</p>
           <input
             v-model="password"
             type="password"
