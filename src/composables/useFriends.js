@@ -122,16 +122,20 @@ export const useFriends = () => {
     return data;
   };
 
-  // Search users by name
+  // Search users by name (empty query returns all users, useful for suggestions)
   const searchUsers = async (query) => {
-    if (!query.trim()) return [];
-    const { data } = await supabase
+    const q = query.trim();
+    let request = supabase
       .from("profiles")
       .select("id, full_name, avatar_url")
-      .ilike("full_name", `%${query}%`)
       .neq("id", currentUser.value.id)
-      .limit(10);
+      .limit(q ? 10 : 20);
 
+    if (q) {
+      request = request.ilike("full_name", `%${q}%`);
+    }
+
+    const { data } = await request;
     return data || [];
   };
 

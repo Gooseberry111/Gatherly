@@ -1,55 +1,34 @@
 <script setup>
-import maryann from "../assets/images/maryann.jpeg";
-import dorcas from "../assets/images/dorcas.jpeg";
-import faith from "../assets/images/faith.jpeg";
-import mercy from "../assets/images/mercy.jpeg";
-import joel from "../assets/images/joel.jpeg";
-import tony from "../assets/images/tony.jpeg";
-import jill from "../assets/images/jill.jpeg";
-import chidera from "../assets/images/chidera.jpeg";
+import { ref, computed, onMounted } from "vue";
+import { supabase } from "../lib/supabase";
+import { currentUser } from "../store/auth";
+import { usePresence } from "../composables/usePresence";
 
-const contacts = [
-  {
-    name: "joel",
-    online: true,
-    avatar: joel,
-  },
-  {
-    name: "mercy",
-    online: true,
-    avatar: mercy,
-  },
-  {
-    name: "Tony",
-    online: false,
-    avatar: tony,
-  },
-  {
-    name: "Faith",
-    online: true,
-    avatar: faith,
-  },
-  {
-    name: "MaryAnne",
-    online: false,
-    avatar: maryann,
-  },
-  {
-    name: "Dorcas",
-    online: true,
-    avatar: dorcas,
-  },
-  {
-    name: "Jill",
-    online: false,
-    avatar: jill,
-  },
-  {
-    name: "Chidera",
-    online: true,
-    avatar: chidera,
-  },
-];
+const { onlineUserIds } = usePresence();
+
+const users = ref([]);
+const loading = ref(true);
+
+onMounted(async () => {
+  loading.value = true;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_url")
+    .neq("id", currentUser.value.id)
+    .limit(20);
+
+  if (!error) users.value = data;
+  loading.value = false;
+});
+
+const contacts = computed(() =>
+  users.value.map((u) => ({
+    id: u.id,
+    name: u.full_name,
+    avatar: u.avatar_url,
+    online: onlineUserIds.value.has(u.id),
+  })),
+);
 </script>
 
 <template>
@@ -117,16 +96,30 @@ const contacts = [
         </div>
       </div>
 
+      <p v-if="loading" class="text-sm text-gray-400 px-2 py-2">Loading...</p>
+      <p
+        v-else-if="contacts.length === 0"
+        class="text-sm text-gray-400 px-2 py-2"
+      >
+        No users yet
+      </p>
+
       <button
         v-for="contact in contacts"
-        :key="contact.name"
+        :key="contact.id"
         class="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-200 transition text-left"
       >
         <div class="relative flex-shrink-0">
-          <img
-            :src="contact.avatar"
-            class="w-9 h-9 rounded-full object-cover"
-          />
+          <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-300">
+            <img
+              v-if="contact.avatar"
+              :src="contact.avatar"
+              class="w-full h-full object-cover"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <i class="fa fa-user text-gray-400 text-xs"></i>
+            </div>
+          </div>
           <span
             v-if="contact.online"
             class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"

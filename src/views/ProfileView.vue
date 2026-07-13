@@ -1,17 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import NavBar from "../components/NavBar.vue";
 import BottomNav from "../components/BottomNav.vue";
 import { supabase } from "../lib/supabase";
 import { currentUser, userProfile } from "../store/auth";
 import { useProfile } from "../composables/useProfile";
 import { useFriends } from "../composables/useFriends";
-import christmas from "../assets/images/christmas.jpeg";
-import grad from "../assets/images/grad.jpeg";
-import peace from "../assets/images/peace.jpeg";
-import ijeoma from "../assets/images/ijeoma.jpeg";
-import chidera from "../assets/images/chidera.jpeg";
-import me from "../assets/images/me.jpeg";
 
 const { updateProfile, uploadAvatar, uploadCover } = useProfile();
 const { getFriends, friends: friendsList } = useFriends();
@@ -29,7 +23,9 @@ const school = ref("");
 const avatarUrl = ref(null);
 const coverUrl = ref(null);
 
-const photos = [christmas, grad, peace, ijeoma, chidera, me];
+const photos = computed(() =>
+  posts.value.filter((p) => p.image_url).map((p) => p.image_url),
+);
 const posts = ref([]);
 
 watch(
