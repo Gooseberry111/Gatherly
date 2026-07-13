@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import { supabase } from "../lib/supabase";
+import { refreshProfile } from "../store/auth";
 
 export const useProfile = () => {
   const profile = ref(null);
@@ -25,8 +26,12 @@ export const useProfile = () => {
       .from("profiles")
       .upsert({ id: userId, ...updates });
 
-    if (err) error.value = err.message;
-    else await getProfile(userId);
+    if (err) {
+      error.value = err.message;
+    } else {
+      await getProfile(userId);
+      await refreshProfile();
+    }
     loading.value = false;
   };
 

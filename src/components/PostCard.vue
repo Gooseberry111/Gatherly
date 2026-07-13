@@ -16,6 +16,18 @@ const commentText = ref("");
 const comments = ref([]);
 const commentsCount = ref(props.post.comments_count || 0);
 
+// Post menu (the "..." button)
+const showPostMenu = ref(false);
+
+const togglePostMenu = () => {
+  showPostMenu.value = !showPostMenu.value;
+};
+
+const handleDelete = () => {
+  showPostMenu.value = false;
+  emit("deletePost", props.post.id);
+};
+
 onMounted(async () => {
   if (currentUser.value) {
     const { data } = await supabase
@@ -93,6 +105,7 @@ const submitComment = async () => {
     commentText.value = "";
   }
 };
+
 const openMenuId = ref(null);
 
 const toggleCommentMenu = (commentId) => {
@@ -145,11 +158,29 @@ const deleteComment = async (commentId) => {
           </p>
         </div>
       </div>
-      <button
-        class="text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
-      >
-        <i class="fa fa-ellipsis-h"></i>
-      </button>
+
+      <!-- Post menu (the "..." button) -->
+      <div class="relative">
+        <button
+          @click="togglePostMenu"
+          class="text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center"
+        >
+          <i class="fa fa-ellipsis-h"></i>
+        </button>
+
+        <div
+          v-if="showPostMenu"
+          class="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 text-sm w-32"
+        >
+          <button
+            v-if="post.user_id === currentUser?.id"
+            @click="handleDelete"
+            class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50 rounded-lg"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Post Content -->

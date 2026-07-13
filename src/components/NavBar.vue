@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import logo from "../assets/Gatherly.png";
 import { useFriends } from "../composables/useFriends";
+import { logout, userProfile } from "../store/auth";
 
+const showAccountMenu = ref(false);
 const router = useRouter();
 const route = useRoute();
 
@@ -11,7 +13,18 @@ const { getPendingRequests, pendingRequests } = useFriends();
 
 onMounted(async () => {
   await getPendingRequests();
+  document.addEventListener("click", closeMenu);
 });
+
+onUnmounted(() => {
+  document.removeEventListener("click", closeMenu);
+});
+
+const closeMenu = (e) => {
+  if (!e.target.closest(".account-menu-wrapper")) {
+    showAccountMenu.value = false;
+  }
+};
 
 const searchQuery = ref("");
 const showResults = ref(false);
@@ -68,6 +81,12 @@ const goTo = (path) => {
   searchQuery.value = "";
   showResults.value = false;
 };
+
+const handleLogout = async () => {
+  await logout();
+  showAccountMenu.value = false;
+  router.push("/");
+};
 </script>
 
 <template>
@@ -79,10 +98,7 @@ const goTo = (path) => {
     >
       <!-- Left: Logo + Search -->
       <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        <!-- Mobile: show text instead of logo -->
         <span class="text-2xl font-bold text-blue-600 sm:hidden">Gatherly</span>
-
-        <!-- Desktop: show logo -->
         <img
           :src="logo"
           alt="Gatherly"
@@ -172,19 +188,14 @@ const goTo = (path) => {
       <!-- Right: Desktop actions -->
       <div class="hidden sm:flex items-center gap-1 sm:gap-2 flex-shrink-0">
         <button
-          @click="router.push('/profile')"
-          class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
-        >
-          <i class="fa fa-user text-gray-600 text-sm sm:text-base"></i>
-        </button>
-        <button
           class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
         >
           <i class="fa fa-comment text-gray-600 text-sm sm:text-base"></i>
         </button>
+
         <button
           @click="router.push('/friend-requests')"
-          class="relative hidden sm:flex bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 items-center justify-center"
+          class="relative bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
         >
           <i class="fa fa-bell text-gray-600 text-sm sm:text-base"></i>
           <span
@@ -194,14 +205,107 @@ const goTo = (path) => {
             {{ pendingRequests.length }}
           </span>
         </button>
+
         <button
           class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
         >
           <i class="fa fa-th text-gray-600 text-sm sm:text-base"></i>
         </button>
+
+        <!-- Account Menu -->
+        <div class="relative account-menu-wrapper">
+          <button
+            @click="showAccountMenu = !showAccountMenu"
+            class="bg-gray-100 hover:bg-gray-200 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden"
+          >
+            <img
+              v-if="userProfile?.avatar_url"
+              :src="userProfile.avatar_url"
+              class="w-full h-full object-cover rounded-full"
+            />
+            <i v-else class="fa fa-user text-gray-600 text-sm sm:text-base"></i>
+          </button>
+
+          <!-- Dropdown -->
+          <div
+            v-if="showAccountMenu"
+            class="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+          >
+            <!-- Profile info -->
+            <div
+              @click="
+                router.push('/profile');
+                showAccountMenu = false;
+              "
+              class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+            >
+              <div
+                class="w-10 h-10 rounded-full overflow-hidden bg-gray-300 flex-shrink-0"
+              >
+                <img
+                  v-if="userProfile?.avatar_url"
+                  :src="userProfile.avatar_url"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <i class="fa fa-user text-gray-400"></i>
+                </div>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">
+                  {{ userProfile?.full_name || "Your Name" }}
+                </p>
+                <p class="text-xs text-blue-500">See your profile</p>
+              </div>
+            </div>
+
+            <!-- Settings -->
+            <button
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left"
+            >
+              <div
+                class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center"
+              >
+                <i class="fa fa-cog text-gray-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-800"
+                >Settings & privacy</span
+              >
+            </button>
+
+            <button
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left"
+            >
+              <div
+                class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center"
+              >
+                <i class="fa fa-question-circle text-gray-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-800"
+                >Help & support</span
+              >
+            </button>
+
+            <!-- Logout -->
+            <button
+              @click="handleLogout"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left border-t border-gray-100"
+            >
+              <div
+                class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center"
+              >
+                <i class="fa fa-sign-out text-gray-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-800">Log out</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Right: Mobile actions (plus, search, message) -->
+      <!-- Right: Mobile actions -->
       <div class="flex sm:hidden items-center gap-2 flex-shrink-0">
         <button
           class="bg-gray-100 hover:bg-gray-200 rounded-full w-9 h-9 flex items-center justify-center"

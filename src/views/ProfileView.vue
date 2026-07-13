@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import NavBar from "../components/NavBar.vue";
 import BottomNav from "../components/BottomNav.vue";
 import { supabase } from "../lib/supabase";
@@ -32,23 +32,25 @@ const coverUrl = ref(null);
 const photos = [christmas, grad, peace, ijeoma, chidera, me];
 const posts = ref([]);
 
+watch(
+  userProfile,
+  (newProfile) => {
+    if (newProfile) {
+      fullName.value = newProfile.full_name || "";
+      bio.value = newProfile.bio || "";
+      location.value = newProfile.location || "";
+      workplace.value = newProfile.workplace || "";
+      school.value = newProfile.school || "";
+      avatarUrl.value = newProfile.avatar_url || null;
+      coverUrl.value = newProfile.cover_url || null;
+    }
+  },
+  { immediate: true },
+);
+
 onMounted(async () => {
-  // Load friends from Supabase
   await getFriends();
 
-  // Load profile data
-  if (userProfile.value) {
-    fullName.value = userProfile.value.full_name || "";
-    bio.value = userProfile.value.bio || "";
-    location.value = userProfile.value.location || "";
-    status.value = userProfile.value.status || "";
-    workplace.value = userProfile.value.workplace || "";
-    school.value = userProfile.value.school || "";
-    avatarUrl.value = userProfile.value.avatar_url || null;
-    coverUrl.value = userProfile.value.cover_url || null;
-  }
-
-  // Load posts
   if (currentUser.value) {
     const { data } = await supabase
       .from("posts")

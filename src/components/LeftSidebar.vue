@@ -5,7 +5,7 @@ const router = useRouter();
 
 const menuItems = [
   { icon: "fa-user", label: "Profile", route: "/profile" },
-  { icon: "fa-user-friends", label: "Friends" },
+  { icon: "fa-user-friends", label: "Friends", route: "/people" },
   { icon: "fa-users", label: "Groups" },
   { icon: "fa-store", label: "Marketplace" },
   { icon: "fa-tv", label: "Watch" },
