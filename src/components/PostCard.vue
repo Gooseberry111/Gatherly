@@ -131,7 +131,9 @@ const deleteComment = async (commentId) => {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow space-y-3">
+  <div
+    class="bg-white border-b-4 border-gray-200 sm:border sm:border-gray-200 sm:rounded-xl sm:shadow space-y-3 sm:mb-0"
+  >
     <!-- Post Header -->
     <div class="flex items-center justify-between px-4 pt-4">
       <div class="flex items-center gap-3">

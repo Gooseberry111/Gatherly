@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import StoryViewer from "./StoryViewer.vue";
 import { supabase } from "../lib/supabase";
-import { currentUser } from "../store/auth";
+import { currentUser, userProfile } from "../store/auth";
 import { useRouter } from "vue-router";
 
 const scrollContainer = ref(null);
@@ -75,6 +75,7 @@ const loadStories = async () => {
       }));
   }
 };
+
 const onStoryImageSelected = async (e) => {
   const file = e.target.files[0];
   if (!file || !currentUser.value) return;
@@ -111,97 +112,105 @@ onMounted(loadStories);
 </script>
 
 <template>
-  <div class="relative">
-    <!-- Story Viewer -->
-    <StoryViewer
-      v-if="showViewer && stories.length > 0"
-      :stories="stories"
-      :startIndex="selectedIndex"
-      @close="closeStory"
-    />
+  <div
+    class="bg-white border-b-4 border-gray-200 py-3 sm:border-none sm:bg-transparent sm:py-0"
+  >
+    <div class="relative">
+      <!-- Story Viewer -->
+      <StoryViewer
+        v-if="showViewer && stories.length > 0"
+        :stories="stories"
+        :startIndex="selectedIndex"
+        @close="closeStory"
+      />
 
-    <!-- Left Arrow -->
-    <button
-      v-if="showLeftArrow"
-      @click="scroll('left')"
-      class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full w-8 h-8 flex items-center justify-center"
-    >
-      <i class="fa fa-chevron-left text-gray-600 text-sm"></i>
-    </button>
-
-    <!-- Scrollable Row -->
-    <div
-      ref="scrollContainer"
-      @scroll="onScroll"
-      class="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
-      style="scrollbar-width: none; -ms-overflow-style: none"
-    >
-      <!-- Create Story -->
-      <!-- Create Story -->
-      <div
-        @click="router.push('/stories/create')"
-        class="flex-shrink-0 w-28 h-44 rounded-xl overflow-hidden shadow cursor-pointer relative bg-white"
+      <!-- Left Arrow -->
+      <button
+        v-if="showLeftArrow"
+        @click="scroll('left')"
+        class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full w-8 h-8 flex items-center justify-center"
       >
+        <i class="fa fa-chevron-left text-gray-600 text-sm"></i>
+      </button>
+
+      <!-- Scrollable Row -->
+      <div
+        ref="scrollContainer"
+        @scroll="onScroll"
+        class="flex gap-3 overflow-x-auto pb-2 scroll-smooth px-3 sm:px-0"
+        style="scrollbar-width: none; -ms-overflow-style: none"
+      >
+        <!-- Create Story -->
         <div
-          class="w-full h-32 bg-gray-200 overflow-hidden flex items-center justify-center"
+          @click="router.push('/stories/create')"
+          class="flex-shrink-0 w-28 h-44 rounded-xl overflow-hidden shadow cursor-pointer relative bg-white"
         >
-          <i class="fa fa-user text-4xl text-gray-400"></i>
-        </div>
-        <div class="absolute bottom-10 left-1/2 -translate-x-1/2">
           <div
-            class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white"
+            class="w-full h-32 bg-gray-200 overflow-hidden flex items-center justify-center"
           >
-            <i class="fa fa-plus text-white text-sm"></i>
+            <img
+              v-if="userProfile?.avatar_url"
+              :src="userProfile.avatar_url"
+              class="w-full h-full object-cover"
+            />
+            <i v-else class="fa fa-user text-4xl text-gray-400"></i>
           </div>
-        </div>
-        <div class="absolute bottom-0 w-full bg-white text-center py-2">
-          <p class="text-xs font-semibold text-gray-800">Create Story</p>
-        </div>
-      </div>
-
-      <!-- Story Cards -->
-      <div
-        v-for="(story, index) in stories"
-        :key="story.id"
-        @click="openStory(index)"
-        class="flex-shrink-0 w-28 h-44 rounded-xl overflow-hidden shadow cursor-pointer relative"
-      >
-        <img :src="story.img" class="w-full h-full object-cover" />
-
-        <!-- Avatar -->
-        <div
-          class="absolute top-3 left-3 w-9 h-9 rounded-full border-4 border-blue-600 overflow-hidden"
-        >
-          <img
-            v-if="story.avatar"
-            :src="story.avatar"
-            class="w-full h-full object-cover"
-          />
-          <div
-            v-else
-            class="w-full h-full bg-gray-300 flex items-center justify-center"
-          >
-            <i class="fa fa-user text-white text-sm"></i>
+          <div class="absolute bottom-10 left-1/2 -translate-x-1/2">
+            <div
+              class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white"
+            >
+              <i class="fa fa-plus text-white text-sm"></i>
+            </div>
+          </div>
+          <div class="absolute bottom-0 w-full bg-white text-center py-2">
+            <p class="text-xs font-semibold text-gray-800">Create Story</p>
           </div>
         </div>
 
-        <!-- Name -->
+        <!-- Story Cards -->
         <div
-          class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent px-2 py-3"
+          v-for="(story, index) in stories"
+          :key="story.id"
+          @click="openStory(index)"
+          class="flex-shrink-0 w-28 h-44 rounded-xl overflow-hidden shadow cursor-pointer relative"
         >
-          <p class="text-xs font-semibold text-white leading-tight">
-            {{ story.name }}
-          </p>
+          <img :src="story.img" class="w-full h-full object-cover" />
+
+          <!-- Avatar -->
+          <div
+            class="absolute top-3 left-3 w-9 h-9 rounded-full border-4 border-blue-600 overflow-hidden"
+          >
+            <img
+              v-if="story.avatar"
+              :src="story.avatar"
+              class="w-full h-full object-cover"
+            />
+            <div
+              v-else
+              class="w-full h-full bg-gray-300 flex items-center justify-center"
+            >
+              <i class="fa fa-user text-white text-sm"></i>
+            </div>
+          </div>
+
+          <!-- Name -->
+          <div
+            class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent px-2 py-3"
+          >
+            <p class="text-xs font-semibold text-white leading-tight">
+              {{ story.name }}
+            </p>
+          </div>
         </div>
       </div>
+
+      <!-- Right Arrow -->
+      <button
+        @click="scroll('right')"
+        class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full w-8 h-8 flex items-center justify-center"
+      >
+        <i class="fa fa-chevron-right text-gray-600 text-sm"></i>
+      </button>
     </div>
-
-    <!-- Right Arrow -->
-    <button
-      @click="scroll('right')"
-      class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full w-8 h-8 flex items-center justify-center"
-    >
-      <i class="fa fa-chevron-right text-gray-600 text-sm"></i>
-    </button>
   </div>
 </template>

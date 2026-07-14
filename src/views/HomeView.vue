@@ -10,7 +10,9 @@ import BottomNav from "../components/BottomNav.vue";
   <div class="min-h-screen bg-gray-100">
     <NavBar />
 
-    <div class="max-w-7xl mx-auto pt-16 grid grid-cols-12 gap-4 px-4">
+    <div
+      class="max-w-7xl mx-auto pt-14 lg:pt-16 grid grid-cols-12 gap-4 lg:px-4"
+    >
       <aside
         class="col-span-3 hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto"
       >

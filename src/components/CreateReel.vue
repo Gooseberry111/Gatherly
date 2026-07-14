@@ -80,7 +80,7 @@ const uploadReel = async () => {
   <div>
     <button
       @click="showModal = true"
-      class="fixed bottom-20 right-6 lg:bottom-10 lg:right-10 z-20 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg"
+      class="fixed bottom-70 right-1 lg:bottom-10 lg:right-10 z-20 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg"
     >
       <i class="fa fa-plus text-xl"></i>
     </button>

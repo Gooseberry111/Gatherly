@@ -6,6 +6,9 @@ import { supabase } from "../lib/supabase";
 import { currentUser, userProfile } from "../store/auth";
 import { useProfile } from "../composables/useProfile";
 import { useFriends } from "../composables/useFriends";
+import ImageCropper from "../components/ImageCropper.vue";
+import { useImageCropper } from "../composables/useImageCropper.js";
+import "cropperjs/dist/cropper.css";
 
 const { updateProfile, uploadAvatar, uploadCover } = useProfile();
 const { getFriends, friends: friendsList } = useFriends();
@@ -57,16 +60,6 @@ onMounted(async () => {
   }
 });
 
-const onAvatarChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = await uploadAvatar(currentUser.value.id, file);
-  if (url) {
-    avatarUrl.value = url;
-    await updateProfile(currentUser.value.id, { avatar_url: url });
-  }
-};
-
 const onCoverChange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -87,6 +80,35 @@ const saveProfile = async () => {
     school: school.value,
   });
   isEditing.value = false;
+};
+const {
+  showCropper,
+  rawImageSrc,
+  aspectRatio,
+  circular,
+  openCropper,
+  handleCropped,
+  handleCancel,
+} = useImageCropper();
+
+const onAvatarChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const croppedBlob = await openCropper(file, {
+    aspectRatio: 1,
+    circular: true,
+  });
+  if (!croppedBlob) return; // user cancelled
+
+  const croppedFile = new File([croppedBlob], "avatar.jpg", {
+    type: "image/jpeg",
+  });
+  const url = await uploadAvatar(currentUser.value.id, croppedFile);
+  if (url) {
+    avatarUrl.value = url;
+    await updateProfile(currentUser.value.id, { avatar_url: url });
+  }
 };
 </script>
 
@@ -731,6 +753,14 @@ const saveProfile = async () => {
       </div>
     </Transition>
 
+    <ImageCropper
+      v-if="showCropper"
+      :image-src="rawImageSrc"
+      :aspect-ratio="aspectRatio"
+      :circular="circular"
+      @cropped="handleCropped"
+      @cancel="handleCancel"
+    />
     <BottomNav />
   </div>
 </template>

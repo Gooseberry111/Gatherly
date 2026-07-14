@@ -40,16 +40,18 @@ onMounted(loadPosts);
 </script>
 
 <template>
-  <div class="py-4 space-y-4">
+  <div class="sm:py-4 sm:space-y-4">
     <CreatePost @newPost="handleNewPost" />
     <StoryBar />
 
-    <PostCard
-      v-for="post in posts"
-      :key="post.id"
-      :post="post"
-      :current-user-id="currentUser?.id"
-      @delete-post="handleDeletePost"
-    />
+    <div>
+      <PostCard
+        v-for="post in posts"
+        :key="post.id"
+        :post="post"
+        :current-user-id="currentUser?.id"
+        @delete-post="handleDeletePost"
+      />
+    </div>
   </div>
 </template>

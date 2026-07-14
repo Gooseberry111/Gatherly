@@ -84,7 +84,9 @@ const submitPost = async () => {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow p-2">
+  <div
+    class="bg-white border-b-4 border-gray-200 p-2 sm:border sm:border-gray-200 sm:rounded-xl sm:shadow"
+  >
     <div class="flex items-center gap-3">
       <div
         class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
